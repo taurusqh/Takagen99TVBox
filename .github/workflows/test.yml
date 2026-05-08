@@ -43,6 +43,11 @@ jobs:
             echo "Fixing Windows Python path to /usr/bin/python3"
             sed -i 's|D:/Programs/Python/Python38/python.exe|/usr/bin/python3|g' Takagen99TVBox/pyramid/build.gradle
           fi
+      - name: Fix Chaquopy pip compatibility
+        if: ${{ env.commit }}
+        run: |
+          python3 -m pip install --upgrade pip setuptools wheel --force-reinstall 2>/dev/null || true
+          python3 -m pip install urllib3==1.26.18 --force-reinstall 2>/dev/null || true
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
