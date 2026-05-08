@@ -33,6 +33,14 @@ jobs:
           cd Takagen99TVBox
           git checkout ${{ env.commit }}
           echo "tag=$(git log --date=format:'%Y%m%d-%H%M' --pretty=format:%cd ${{ env.commitS }} -1)" >> $GITHUB_ENV
+      - name: Fix Chaquopy version
+        if: ${{ env.commit }}
+        run: |
+          echo "Checking current Chaquopy version..."
+          grep -r "com.chaquo.python:gradle" Takagen99TVBox/
+          echo "Updating Chaquopy from 12.0.1 to 13.0.1..."
+          find Takagen99TVBox/ -name "*.gradle" -exec sed -i 's|com.chaquo.python:gradle:12.0.1|com.chaquo.python:gradle:13.0.1|g' {} \;
+          grep -r "com.chaquo.python:gradle" Takagen99TVBox/
       - name: Setup Python local.properties
         if: ${{ env.commit }}
         run: echo "" > Takagen99TVBox/local.properties 
