@@ -33,21 +33,21 @@ jobs:
           cd Takagen99TVBox
           git checkout ${{ env.commit }}
           echo "tag=$(git log --date=format:'%Y%m%d-%H%M' --pretty=format:%cd ${{ env.commitS }} -1)" >> $GITHUB_ENV
+      - name: Fix build.gradle - upgrade Chaquopy to 14.0.1 (fixes pip bug)
+        if: ${{ env.commit }}
+        run: |
+          echo "Upgrading Chaquopy from 12.0.1 to 14.0.1..."
+          sed -i 's|com.chaquo.python:gradle:12.0.1|com.chaquo.python:gradle:14.0.1|g' Takagen99TVBox/build.gradle
+          grep "chaquo.python:gradle" Takagen99TVBox/build.gradle
+      - name: Fix pyramid build.gradle - remove Windows Python path
+        if: ${{ env.commit }}
+        run: |
+          echo "Removing Windows Python path..."
+          sed -i '/buildPython.*python.exe/d' Takagen99TVBox/pyramid/build.gradle
+          echo "Done"
       - name: Setup Python local.properties
         if: ${{ env.commit }}
         run: echo "" > Takagen99TVBox/local.properties 
-      - name: Fix Python path for pyramid (chaquopy)
-        if: ${{ env.commit }}
-        run: |
-          if grep -q 'D:/Programs/Python/Python38/python.exe' Takagen99TVBox/pyramid/build.gradle 2>/dev/null; then
-            echo "Fixing Windows Python path to /usr/bin/python3"
-            sed -i 's|D:/Programs/Python/Python38/python.exe|/usr/bin/python3|g' Takagen99TVBox/pyramid/build.gradle
-          fi
-      - name: Fix Chaquopy pip compatibility
-        if: ${{ env.commit }}
-        run: |
-          python3 -m pip install --upgrade pip setuptools wheel --force-reinstall 2>/dev/null || true
-          python3 -m pip install urllib3==1.26.18 --force-reinstall 2>/dev/null || true
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
