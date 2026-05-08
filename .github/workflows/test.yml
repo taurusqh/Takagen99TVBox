@@ -33,18 +33,26 @@ jobs:
           cd Takagen99TVBox
           git checkout ${{ env.commit }}
           echo "tag=$(git log --date=format:'%Y%m%d-%H%M' --pretty=format:%cd ${{ env.commitS }} -1)" >> $GITHUB_ENV
-      - name: Fix Chaquopy pip compatibility issue - disable pip validation
+      - name: Setup Python
+        if: ${{ env.commit }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.8'
+      - name: Install Python dependencies
         if: ${{ env.commit }}
         run: |
-          # Patch pyramid/build.gradle to disable pip check
-          if [ -f Takagen99TVBox/pyramid/build.gradle ]; then
-            echo "Adding pip validation disable to pyramid build.gradle"
-            echo 'python { pip { installOptions = ["--no-deps", "--disable-pip-version-check"] } }' >> Takagen99TVBox/pyramid/build.gradle
-            cat Takagen99TVBox/pyramid/build.gradle
-          fi
+          python -m pip install --upgrade pip
+          pip install lxml ujson pyquery requests jsonpath cachetools pycryptodome beautifulsoup4
+      - name: Modify pyramid build.gradle - remove Windows Python path
+        if: ${{ env.commit }}
+        working-directory: Takagen99TVBox
+        run: |
+          sed -i '/buildPython.*python.exe/d' pyramid/build.gradle
+          echo "Done - buildPython line removed"
       - name: Setup Python local.properties
         if: ${{ env.commit }}
-        run: echo "" > Takagen99TVBox/local.properties 
+        working-directory: Takagen99TVBox
+        run: echo "" > local.properties 
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
