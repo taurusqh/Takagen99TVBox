@@ -33,18 +33,12 @@ jobs:
           cd Takagen99TVBox
           git checkout ${{ env.commit }}
           echo "tag=$(git log --date=format:'%Y%m%d-%H%M' --pretty=format:%cd ${{ env.commitS }} -1)" >> $GITHUB_ENV
-      - name: Fix build.gradle - upgrade Chaquopy to 14.0.1 (fixes pip bug)
+      - name: Remove pyramid module (Chaquopy - causes build issues)
         if: ${{ env.commit }}
         run: |
-          echo "Upgrading Chaquopy from 12.0.1 to 14.0.1..."
-          sed -i 's|com.chaquo.python:gradle:12.0.1|com.chaquo.python:gradle:14.0.1|g' Takagen99TVBox/build.gradle
-          grep "chaquo.python:gradle" Takagen99TVBox/build.gradle
-      - name: Fix pyramid build.gradle - remove Windows Python path
-        if: ${{ env.commit }}
-        run: |
-          echo "Removing Windows Python path..."
-          sed -i '/buildPython.*python.exe/d' Takagen99TVBox/pyramid/build.gradle
-          echo "Done"
+          echo "Excluding pyramid module to bypass Chaquopy build issues..."
+          sed -i "s|include ':pyramid'|// include ':pyramid' // disabled|g" Takagen99TVBox/settings.gradle
+          grep "pyramid" Takagen99TVBox/settings.gradle || echo "pyramid excluded"
       - name: Setup Python local.properties
         if: ${{ env.commit }}
         run: echo "" > Takagen99TVBox/local.properties 
