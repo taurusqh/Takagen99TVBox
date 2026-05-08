@@ -1,11 +1,10 @@
 name: Test Build
 
 on:
-#  push:
-#    branches:
-#      - main
-#  pull_request:
+  schedule:
+    - cron: 59 */8 * * *
   workflow_dispatch:
+    inputs:
 
 jobs:
   build:
@@ -14,19 +13,57 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Check New Commit
+        run: |
+          upStream=https://github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}
+          echo "upStream=$upStream" >> $GITHUB_ENV
+          commit=$(curl -sL $upStream/commits/${{ github.ref_name }} |grep -o "/${{ github.repository_owner }}/${{ github.event.repository.name }}/commit/[a-z0-9]\+" |head -1 | cut -d\/ -f5)
+          if [[ -z "${commit}" ]]; then
+            commit=$(curl -s "https://api.github.com/repos/${{ github.repository_owner }}/${{ github.event.repository.name }}/commits/${{ github.ref_name }}?per_page=1" | jq -r '.sha' )
+          fi
+          if ! grep -q "$commit" README.md || [ "${{ inputs.rebuild }}" == "true" ]; then
+            echo "commit=$commit" >> $GITHUB_ENV
+            echo "commitS=${commit:0:7}" >> $GITHUB_ENV
+          fi
+          echo "commit=$commit"
+      - name: Checkout Source Code
+        if: ${{ env.commit }}
+        run: |
+          git clone ${{ env.upStream }} Takagen99TVBox
+          cd Takagen99TVBox
+          git checkout ${{ env.commit }}
+          echo "tag=$(git log --date=format:'%Y%m%d-%H%M' --pretty=format:%cd ${{ env.commitS }} -1)" >> $GITHUB_ENV
+      - name: Setup Python local.properties
+        working-directory: Takagen99TVBox
+        run: echo "" > local.properties 
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v6
       - name: Build With Gradle
+        if: ${{ env.commit }}
+        working-directory: Takagen99TVBox
         run: |
           chmod +x gradlew
           ./gradlew assemblerelease --build-cache --parallel --daemon --warning-mode all
       - name: Prepare App
+        if: ${{ env.commit }}
+        working-directory: Takagen99TVBox
         run: |
-          mkdir -p ${{ github.workspace }}/apk/
+          mkdir -p apk/
           for file in `find ~ -name "*.apk" -print`; do
-            mv "$file" ${{ github.workspace }}/apk/
+            base=$(basename "$file")
+            if [[ "$base" == TVBox_* ]]; then
+              new_base=$(echo "$base" | sed "s/release/${{ github.repository_owner }}_${{ env.tag }}/")
+            else
+              new_base="TVBox_${{ github.repository_owner }}_${{ env.tag }}.apk"
+            fi
+            mv "$file" "apk/$new_base"
           done
       - name: Upload App To Artifact
         uses: actions/upload-artifact@v4
+        if: ${{ env.commit }}
         with:
-          name: com.github.tvbox.osc
-          path: ${{ github.workspace }}/apk/*
-
+          name: Takagen99TVBox-apk
+          path: Takagen99TVBox/apk/*
