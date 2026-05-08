@@ -34,8 +34,8 @@ jobs:
           git checkout ${{ env.commit }}
           echo "tag=$(git log --date=format:'%Y%m%d-%H%M' --pretty=format:%cd ${{ env.commitS }} -1)" >> $GITHUB_ENV
       - name: Setup Python local.properties
-        working-directory: Takagen99TVBox
-        run: echo "" > local.properties 
+        if: ${{ env.commit }}
+        run: echo "" > Takagen99TVBox/local.properties 
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
