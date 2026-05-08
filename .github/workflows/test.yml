@@ -37,8 +37,11 @@ jobs:
         if: ${{ env.commit }}
         run: |
           echo "Excluding pyramid module to bypass Chaquopy build issues..."
+          # Comment out pyramid in settings.gradle
           sed -i "s|include ':pyramid'|// include ':pyramid' // disabled|g" Takagen99TVBox/settings.gradle
-          grep "pyramid" Takagen99TVBox/settings.gradle || echo "pyramid excluded"
+          # Remove pyramid dependency from app/build.gradle
+          sed -i 's|pythonImplementation project(":pyramid")|// pythonImplementation project(":pyramid") // disabled|g' Takagen99TVBox/app/build.gradle
+          echo "Done"
       - name: Setup Python local.properties
         if: ${{ env.commit }}
         run: echo "" > Takagen99TVBox/local.properties 
