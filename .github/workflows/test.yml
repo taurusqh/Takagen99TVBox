@@ -36,6 +36,13 @@ jobs:
       - name: Setup Python local.properties
         if: ${{ env.commit }}
         run: echo "" > Takagen99TVBox/local.properties 
+      - name: Fix Python path for pyramid (chaquopy)
+        if: ${{ env.commit }}
+        run: |
+          if grep -q 'D:/Programs/Python/Python38/python.exe' Takagen99TVBox/pyramid/build.gradle 2>/dev/null; then
+            echo "Fixing Windows Python path to /usr/bin/python3"
+            sed -i 's|D:/Programs/Python/Python38/python.exe|/usr/bin/python3|g' Takagen99TVBox/pyramid/build.gradle
+          fi
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
