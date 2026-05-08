@@ -33,15 +33,19 @@ jobs:
           cd Takagen99TVBox
           git checkout ${{ env.commit }}
           echo "tag=$(git log --date=format:'%Y%m%d-%H%M' --pretty=format:%cd ${{ env.commitS }} -1)" >> $GITHUB_ENV
-      - name: Remove pyramid module (Chaquopy - causes build issues)
+      - name: Remove pyramid module and Chaquopy source files
         if: ${{ env.commit }}
         run: |
-          echo "Excluding pyramid module to bypass Chaquopy build issues..."
-          # Comment out pyramid in settings.gradle
+          echo "Removing pyramid module and Chaquopy source files..."
+          # Remove pyramid from settings
           sed -i "s|include ':pyramid'|// include ':pyramid' // disabled|g" Takagen99TVBox/settings.gradle
-          # Remove pyramid dependency from app/build.gradle
+          # Remove pyramid dependency from app
           sed -i 's|pythonImplementation project(":pyramid")|// pythonImplementation project(":pyramid") // disabled|g' Takagen99TVBox/app/build.gradle
-          echo "Done"
+          # Remove the Java source files that use Chaquopy classes
+          rm -rf Takagen99TVBox/app/src/python
+          echo "Done removing Chaquopy-related files"
+          # Verify
+          ls Takagen99TVBox/app/src/
       - name: Setup Python local.properties
         if: ${{ env.commit }}
         run: echo "" > Takagen99TVBox/local.properties 
