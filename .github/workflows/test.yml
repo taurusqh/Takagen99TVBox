@@ -80,9 +80,16 @@ jobs:
             fi
             mv "$file" "apk/$new_base"
           done
-      - name: Upload App To Artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload Each APK Separately
         if: ${{ env.commit }}
-        with:
-          name: Takagen99TVBox-apk
-          path: Takagen99TVBox/apk/*
+        working-directory: Takagen99TVBox
+        run: |
+          for apk in apk/*.apk; do
+            if [ -f "$apk" ]; then
+              filename=$(basename "$apk")
+              # Remove .apk extension for artifact name (artifacts can't have .apk in name)
+              artifact_name="${filename%.apk}"
+              echo "Uploading $filename as artifact: $artifact_name"
+              gh artifact upload "$apk" --name "$artifact_name" --repo "${{ github.repository }}"
+            fi
+          done
